@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?><process version="9.4.001">
+  <context>
+    <input/>
+    <output/>
+    <macros/>
+  </context>
+  <operator activated="true" class="process" compatibility="9.4.001" expanded="true" name="Process">
+    <parameter key="logverbosity" value="init"/>
+    <parameter key="random_seed" value="2001"/>
+    <parameter key="send_mail" value="never"/>
+    <parameter key="notification_email" value=""/>
+    <parameter key="process_duration_for_mail" value="30"/>
+    <parameter key="encoding" value="SYSTEM"/>
+    <process expanded="true">
+      <operator activated="true" class="retrieve" compatibility="9.4.001" expanded="true" height="68" name="Retrieve" width="90" x="45" y="85">
+        <parameter key="repository_entry" value="//Local Repository/G v X ML ALL CONDITIONS TRAINING SET NORMALIZED"/>
+      </operator>
+      <operator activated="true" class="set_role" compatibility="9.4.001" expanded="true" height="82" name="Set Role" width="90" x="112" y="187">
+        <parameter key="attribute_name" value="Label"/>
+        <parameter key="target_role" value="label"/>
+        <list key="set_additional_roles"/>
+      </operator>
+      <operator activated="true" class="concurrency:loop_parameters" compatibility="9.4.001" expanded="true" height="82" name="Loop Parameters" width="90" x="313" y="187">
+        <list key="parameters">
+          <parameter key="Validation by Attribute Subset.split_ratio" value="[.10;.9;8;linear]"/>
+        </list>
+        <parameter key="error_handling" value="fail on error"/>
+        <parameter key="log_performance" value="true"/>
+        <parameter key="log_all_criteria" value="false"/>
+        <parameter key="synchronize" value="false"/>
+        <parameter key="enable_parallel_execution" value="true"/>
+        <process expanded="true">
+          <operator activated="true" class="loop_and_average" compatibility="9.4.001" expanded="true" height="82" name="Loop and Average" width="90" x="313" y="136">
+            <parameter key="iterations" value="100"/>
+            <parameter key="average_performances_only" value="true"/>
+            <process expanded="true">
+              <operator activated="true" class="split_validation" compatibility="9.4.001" expanded="true" height="124" name="Validation by Attribute Subset" width="90" x="246" y="85">
+                <parameter key="create_complete_model" value="false"/>
+                <parameter key="split" value="relative"/>
+                <parameter key="split_ratio" value="0.1"/>
+                <parameter key="training_set_size" value="100"/>
+                <parameter key="test_set_size" value="-1"/>
+                <parameter key="sampling_type" value="automatic"/>
+                <parameter key="use_local_random_seed" value="false"/>
+                <parameter key="local_random_seed" value="1992"/>
+                <process expanded="true">
+                  <operator activated="true" class="logistic_regression" compatibility="9.4.001" expanded="true" height="103" name="Logistic Regression (SVM)" width="90" x="112" y="34">
+                    <parameter key="kernel_type" value="dot"/>
+                    <parameter key="kernel_gamma" value="1.0"/>
+                    <parameter key="kernel_sigma1" value="1.0"/>
+                    <parameter key="kernel_sigma2" value="0.0"/>
+                    <parameter key="kernel_sigma3" value="2.0"/>
+                    <parameter key="kernel_shift" value="1.0"/>
+                    <parameter key="kernel_degree" value="2.0"/>
+                    <parameter key="kernel_a" value="1.0"/>
+                    <parameter key="kernel_b" value="0.0"/>
+                    <parameter key="kernel_cache" value="200"/>
+                    <parameter key="C" value="1.0"/>
+                    <parameter key="convergence_epsilon" value="0.001"/>
+                    <parameter key="max_iterations" value="100000"/>
+                    <parameter key="scale" value="true"/>
+                    <parameter key="calculate_weights" value="true"/>
+                    <parameter key="return_optimization_performance" value="true"/>
+                  </operator>
+                  <connect from_port="training" to_op="Logistic Regression (SVM)" to_port="training set"/>
+                  <connect from_op="Logistic Regression (SVM)" from_port="model" to_port="model"/>
+                  <portSpacing port="source_training" spacing="0"/>
+                  <portSpacing port="sink_model" spacing="0"/>
+                  <portSpacing port="sink_through 1" spacing="0"/>
+                </process>
+                <process expanded="true">
+                  <operator activated="true" class="apply_model" compatibility="9.4.001" expanded="true" height="82" name="Apply Model (3)" width="90" x="45" y="34">
+                    <list key="application_parameters"/>
+                    <parameter key="create_view" value="false"/>
+                  </operator>
+                  <operator activated="true" class="performance_classification" compatibility="9.4.001" expanded="true" height="82" name="Performance for weight class" width="90" x="112" y="238">
+                    <parameter key="main_criterion" value="accuracy"/>
+                    <parameter key="accuracy" value="true"/>
+                    <parameter key="classification_error" value="false"/>
+                    <parameter key="kappa" value="false"/>
+                    <parameter key="weighted_mean_recall" value="false"/>
+                    <parameter key="weighted_mean_precision" value="false"/>
+                    <parameter key="spearman_rho" value="false"/>
+                    <parameter key="kendall_tau" value="false"/>
+                    <parameter key="absolute_error" value="false"/>
+                    <parameter key="relative_error" value="false"/>
+                    <parameter key="relative_error_lenient" value="false"/>
+                    <parameter key="relative_error_strict" value="false"/>
+                    <parameter key="normalized_absolute_error" value="false"/>
+                    <parameter key="root_mean_squared_error" value="false"/>
+                    <parameter key="root_relative_squared_error" value="false"/>
+                    <parameter key="squared_error" value="false"/>
+                    <parameter key="correlation" value="false"/>
+                    <parameter key="squared_correlation" value="false"/>
+                    <parameter key="cross-entropy" value="false"/>
+                    <parameter key="margin" value="false"/>
+                    <parameter key="soft_margin_loss" value="false"/>
+                    <parameter key="logistic_loss" value="false"/>
+                    <parameter key="skip_undefined_labels" value="true"/>
+                    <parameter key="use_example_weights" value="true"/>
+                    <list key="class_weights"/>
+                    <description align="center" color="transparent" colored="false" width="126">Type your comment</description>
+                  </operator>
+                  <connect from_port="model" to_op="Apply Model (3)" to_port="model"/>
+                  <connect from_port="test set" to_op="Apply Model (3)" to_port="unlabelled data"/>
+                  <connect from_op="Apply Model (3)" from_port="labelled data" to_op="Performance for weight class" to_port="labelled data"/>
+                  <connect from_op="Performance for weight class" from_port="performance" to_port="averagable 1"/>
+                  <portSpacing port="source_model" spacing="0"/>
+                  <portSpacing port="source_test set" spacing="0"/>
+                  <portSpacing port="source_through 1" spacing="0"/>
+                  <portSpacing port="sink_averagable 1" spacing="0"/>
+                  <portSpacing port="sink_averagable 2" spacing="0"/>
+                </process>
+              </operator>
+              <connect from_port="in 1" to_op="Validation by Attribute Subset" to_port="training"/>
+              <connect from_op="Validation by Attribute Subset" from_port="averagable 1" to_port="averagable 1"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="sink_averagable 1" spacing="0"/>
+              <portSpacing port="sink_averagable 2" spacing="0"/>
+            </process>
+          </operator>
+          <operator activated="true" class="log" compatibility="9.4.001" expanded="true" height="82" name="Log" width="90" x="447" y="136">
+            <parameter key="filename" value="C:\Users\coder\Desktop\SVM_loop.log"/>
+            <list key="log">
+              <parameter key="Performance" value="operator.Performance for weight class.value.accuracy"/>
+              <parameter key="Percent Split" value="operator.Validation by Attribute Subset.parameter.split_ratio"/>
+            </list>
+            <parameter key="sorting_type" value="none"/>
+            <parameter key="sorting_k" value="100"/>
+            <parameter key="persistent" value="true"/>
+          </operator>
+          <connect from_port="input 1" to_op="Loop and Average" to_port="in 1"/>
+          <connect from_op="Loop and Average" from_port="averagable 1" to_op="Log" to_port="through 1"/>
+          <connect from_op="Log" from_port="through 1" to_port="performance"/>
+          <portSpacing port="source_input 1" spacing="0"/>
+          <portSpacing port="source_input 2" spacing="0"/>
+          <portSpacing port="sink_performance" spacing="0"/>
+          <portSpacing port="sink_output 1" spacing="0"/>
+          <portSpacing port="sink_output 2" spacing="0"/>
+          <description align="center" color="yellow" colored="false" height="105" resized="false" width="180" x="480" y="331">Type your comment</description>
+          <description align="center" color="yellow" colored="false" height="105" resized="false" width="180" x="480" y="278">Type your comment</description>
+          <description align="center" color="yellow" colored="false" height="105" resized="false" width="180" x="493" y="264">Type your comment</description>
+        </process>
+      </operator>
+      <connect from_op="Retrieve" from_port="output" to_op="Set Role" to_port="example set input"/>
+      <connect from_op="Set Role" from_port="example set output" to_op="Loop Parameters" to_port="input 1"/>
+      <connect from_op="Loop Parameters" from_port="output 1" to_port="result 1"/>
+      <portSpacing port="source_input 1" spacing="0"/>
+      <portSpacing port="sink_result 1" spacing="0"/>
+      <portSpacing port="sink_result 2" spacing="0"/>
+    </process>
+  </operator>
+</process>
